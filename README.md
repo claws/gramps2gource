@@ -4,7 +4,7 @@ Blurring the line between Genealogy and Software Configuration Management visual
 
 ## Overview
 
-[Gramps](gramps-project.org) is a Genealogy program written in Python. [Gource](https://code.google.com/p/gource/) is a visualisation tool for showing software version control changes over time. Gramps2Gource combines these two tools to help produce a novel family history visualisation. It parses exported `.gramps` files to produce a Gource custom log file that contains the pedigree of a specified person. This file is then passed to Gource for rendering.
+[Gramps](http://gramps-project.org/) is a Genealogy program written in Python. [Gource](https://code.google.com/p/gource/) is a visualisation tool for showing software version control changes over time. *Gramps2Gource* combines these two tools to help produce a novel family history visualisation. It parses exported `.gramps` files to produce a Gource custom log file that contains the pedigree of a specified person. This file is then passed to Gource for rendering.
 
 The Gource custom log format contains the following pipe ('|') delimited fields:
 
