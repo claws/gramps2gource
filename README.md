@@ -4,7 +4,12 @@ Blurring the line between Genealogy and Software Configuration Management visual
 
 ## Overview
 
-[Gramps](http://gramps-project.org/) is a Genealogy program written in Python. [Gource](https://code.google.com/p/gource/) is a visualisation tool for showing software version control changes over time. *Gramps2Gource* combines these two tools to help produce a novel family history visualisation. It parses exported `.gramps` files to produce a Gource custom log file that contains the pedigree of a specified person. This file is then passed to Gource for rendering.
+[Gramps](http://gramps-project.org/) is a Genealogy program written in Python. [Gource](https://code.google.com/p/gource/) is a visualisation tool for showing software version control changes over time. **Gramps2Gource** combines these two tools to help produce a novel family history visualisation. It parses exported `.gramps` files to produce a Gource custom log file that contains the pedigree of a specified person. This file is then passed to Gource for rendering. See the example video below:
+
+<center><a href="http://www.youtube.com/watch?feature=player_embedded&v=sPtTTv6d0s8
+" target="_blank"><img src="http://www.youtube.com/watch?v=sPtTTv6d0s8/0.jpg"
+alt="Gramps2Gource Example" width="240" height="180" border="10" /></a></center>
+
 
 The Gource custom log format contains the following pipe ('|') delimited fields:
 
@@ -14,7 +19,7 @@ The Gource custom log format contains the following pipe ('|') delimited fields:
     file      - Path of the file updated.
     colour    - A colour for the file in hex (FFFFFF) format. Optional.
 
-Maybe one day I'll investigate integrating this into a Gramps plugin where it could access the Gramps database directly instead of via an exported `.gramps` file.
+One day I may investigate integrating this into Gramps as a plugin where it could access the Gramps database directly instead of via an exported `.gramps` file.
 
 As always, garbage in garbage out. If your database is not well managed and consistent then your milage may vary.
 
@@ -40,6 +45,11 @@ NOTE: Gource versions prior to v0.38 could not handle negative times (times befo
     5. Click forward again as the defaults are OK.
     6. Choose a filename then click `Forward`.
     7. Click Apply.
+
+### Download Gramps2Gource
+
+	git clone https://github.com/claws/gramps2gource.git
+	cd gramps2gource
 
 
 ## Using Gramps2Gource
