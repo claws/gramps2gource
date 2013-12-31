@@ -133,8 +133,6 @@ class Event(object):
 
         o.append("{0}{1}, {2}".format(indent, self.type, dateStr))
 
-        # o.append("%shandle=%s, id=%s" % (indent, self.handle, self.id))
-
         placeStr = "unknown"
         if self.place:
             thePlace = self.store.get_place(self.place)
@@ -308,7 +306,7 @@ class Person(object):
                 if includeEventsWithNoDate:
                     undated_events.append((self, event, directPersonEvent))
                 else:
-                    logging.info("Discarding direct person event {0} for {1} as it has no date".format(event.type, self.name))
+                    logging.debug("Discarding direct person event {0} for {1} as it has no date".format(event.type, self.name))
                     pass
 
         # now retrieve associated events that this person was involved with
@@ -375,7 +373,7 @@ class Person(object):
         def get_datetime(dated_event_tuple):
             person_or_family_object, event, directEvent = dated_event_tuple
             return event.datetime
-        # dated_events.sort(key=lambda obj_ev_: obj_ev[1].datetime)
+
         dated_events.sort(key=get_datetime)
 
         events = dated_events
@@ -383,10 +381,6 @@ class Person(object):
         # tack undated events onto end of time ordered list if requested
         if includeEventsWithNoDate:
             events.extend(undated_events)
-
-        # totalEvents = len(dated_events) + len(undated_events)
-        # if totalEvents != len(events):
-        #    print "Only %i of %i associated events were returned - probably because some were missing dates" % (len(events), len(associated_events))
 
         return events
 
@@ -548,11 +542,10 @@ class Family(object):
     def __str__(self):
         o = []
         o.append("Family")
-        # o.append("%shandle=%s, id=%s" % (indent, self.handle, self.id))
         o.append("{0}{1}".format(indent, self.name_with_dates))
         o.append("{0}relationship={1}".format(indent, self.relationship))
 
-        # display eventref here
+        # TODO: display eventref here
 
         if self.children:
             o.append("{0}Children:".format(indent))
@@ -624,14 +617,14 @@ class Store(object):
         matching name.
         Return None if no match is found.
         '''
-        logging.info("Beginning search for {0}".format(search_name))
+        logging.debug("Searching for {0}".format(search_name))
         search_person_handle = None
         for person_handle in self.persons:
             person = self.get_person(person_handle)
             if person.name == search_name:
                 search_person_handle = person.handle
-                logging.info("Found {0} with handle {1}".format(search_name,
-                                                                person.handle))
+                logging.debug("Found {0} with handle {1}".format(search_name,
+                                                                 person.handle))
                 break
         return search_person_handle
 
@@ -666,16 +659,6 @@ class NS:
 
         return ns_path
 
-        # if path.startswith(".//"):
-        #     o = []
-        #     for tag in path[3:].split("/"):
-        #         _attr = getattr(self, tag)
-        #         o.append(_attr)
-        #     return ".//%s" % "/".join(o)
-        #     #return ".//%s" % "/".join(getattr(self, tag) for tag in path[3:].split("/"))
-
-        # return "/".join(getattr(self, tag) for tag in path.split("/"))
-
 
 def to_pretty_xml(elem):
     """
@@ -694,7 +677,7 @@ class Parser(object):
         @return: a store object populated with content extracted from the database.
         """
 
-        logging.info("Loading Gramps database")
+        logging.info("Loading Gramps database from {0}".format(gramps_file))
 
         store = Store()
 
@@ -703,16 +686,16 @@ class Parser(object):
 
             root = etree.fromstring(data)
 
-            # detect the namespace so we know what to place in front
+            # Detect the namespace so we know what to place in front
             # of the known tag names.
             detected_namespace = ""
             items = root.tag.split("}")
             if len(items) == 2:
                 namespace_candidate, tag = items
                 if "{" in namespace_candidate:
-                    # there is a namespace prefix
+                    # There is a namespace prefix
                     detected_namespace = '{%s}' % namespace_candidate[1:]
-                    # print "Detected namespace: %s" % detected_namespace
+
             GrampsNS = NS(detected_namespace)
 
             # Extract person entries into Person objects and store them
@@ -733,27 +716,21 @@ class Parser(object):
 
                 nameNode = personNode.find(GrampsNS('name'))
                 if nameNode:
-                    #name_type = nameNode.attrib.get('type')
 
                     firstnameNode = nameNode.find(GrampsNS('first'))
                     if firstnameNode is not None:
                         p.firstnames = firstnameNode.text.split(" ")
                     else:
-                        # print "No first name node found"
-                        # print to_pretty_xml(nameNode)
-                        pass
+                        pass  # No first name node found
 
                     surnameNode = nameNode.find(GrampsNS('surname'))
                     if surnameNode is not None:
                         p.surname = surnameNode.text
                         p.prefix = surnameNode.attrib.get('prefix')
                     else:
-                        # print "No surname node found"
-                        # print to_pretty_xml(nameNode)
-                        pass
+                        pass  # No surname node found
                 else:
-                    # print "No name node found"
-                    pass
+                    pass  # No name node found
 
                 for eventNode in personNode.findall(GrampsNS('eventref')):
                     event_handle = eventNode.attrib.get('hlink')
@@ -897,7 +874,7 @@ class Parser(object):
                     p.lat = coordNode.attrib.get('lat')
                     p.lon = coordNode.attrib.get('long')
 
-
+            # TODO:
             # extract sources
             # extract notes
             # etc
