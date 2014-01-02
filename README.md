@@ -90,3 +90,5 @@ h264:
 webm:
 
     $ cat ~/path/to/custom_output.log | gource --load-config gource.conf -output-ppm-stream - | avconv -y -r 30 -f image2pipe -vcodec ppm -i - -vcodec libvpx -b 10000K /path/to/video/output/file.webm
+
+[![Analytics](https://ga-beacon.appspot.com/UA-29867375-2/gramps2gource/readme?pixel)](https://github.com/claws/gramps2gource)
