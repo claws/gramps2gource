@@ -6,6 +6,9 @@ This module implements a simple and naive Gramps XML file (.gramps) parser.
 Author: Chris Laws
 '''
 
+from __future__ import unicode_literals
+from future.builtins import str
+
 import datetime
 import dateutil.parser
 import gzip
@@ -36,7 +39,15 @@ def generate_timestring(dt):
 
 class Place(object):
     '''
-    A place object
+    A Gramps place object.
+
+    Example of a Gramps place structure:
+
+      <places>
+       <placeobj handle="_bcd2a83849845c12c13" change="1297580946" id="P0806">
+         <ptitle>Morwell, Victoria, Australia</ptitle>
+         <coord long="146.3947107" lat="-38.2345742"/>
+       </placeobj>
     '''
 
     def __init__(self, store):
@@ -72,7 +83,22 @@ class Place(object):
 
 class Event(object):
     '''
-    An event object
+    A Gramps event object.
+
+    Example of a Gramps event structure:
+
+    <event handle="_bb2a73da89376f2e069" change="1287656448" id="E1000">
+     <type>Death</type>
+     <dateval val="1955-06-04"/>
+     <place hlink="_bb2a73da908569b4132"/>
+     <noteref hlink="_bb2a73da9362223d031"/>
+     <sourceref hlink="_bb60df55dd862a3e6b1" conf="4">
+       <spage>1955/012559</spage>
+       <noteref hlink="_bb60eb134ff61992598"/>
+       <dateval val="1955-06-04"/>
+     </sourceref>
+    </event>
+
     '''
 
     def __init__(self, store):
@@ -98,14 +124,14 @@ class Event(object):
             try:
                 parts = self.date.split("-")
                 if len(parts) == 2:
-                    logging.warn("{0} missing item from date string, using day 01 for compatibility".format(self.date))
+                    logging.debug("{0} missing item from date string, using day 01 for compatibility".format(self.date))
                     self.date = "{0}-01".format(self.date)
                 # Dates are used in many different formats, use the
                 # dateutil parser in an effort to successfully
                 # parse a useful date.
                 dt = dateutil.parser.parse(self.date)
                 return dt
-            except ValueError, ex:
+            except ValueError as ex:
                 logging.error("Problem date \'{0}\':".format(self.date, ex))
                 raise Exception(ex)
         else:
@@ -444,7 +470,22 @@ class Person(object):
 
 class Family(object):
     '''
-    A family object
+    A Gramps family object
+
+    Example of a Gramps family structure:
+
+    <family handle="_bbd9a6fc3005c442174" change="1296473477" id="F0414">
+     <rel type="Unknown"/>
+     <father hlink="_bbd9a89f2d86cb5d966"/>
+     <mother hlink="_bbd9aa0bf5828e2063d"/>
+     <eventref hlink="_bbd9aac4f234de2e484" role="Family"/>
+     <childref hlink="_bbd99985f4654c844c2"/>
+     <childref hlink="_bbd9b4d182d06ba9642"/>
+     <childref hlink="_bbd9b59cb0709454032"/>
+     <childref hlink="_bbd9b32db1501cb7968"/>
+     <childref hlink="_bbd9fd3f1404b1ac595"/>
+    </family>
+
     '''
 
     def __init__(self, store):
@@ -748,20 +789,6 @@ class Parser(object):
                     note_handle = noteNode.attrib.get('hlink')
                     p.notes.append(note_handle)
 
-            # This is an example of the event structure:
-            #
-            # <family handle="_bbd9a6fc3005c442174" change="1296473477" id="F0414">
-            #  <rel type="Unknown"/>
-            #  <father hlink="_bbd9a89f2d86cb5d966"/>
-            #  <mother hlink="_bbd9aa0bf5828e2063d"/>
-            #  <eventref hlink="_bbd9aac4f234de2e484" role="Family"/>
-            #  <childref hlink="_bbd99985f4654c844c2"/>
-            #  <childref hlink="_bbd9b4d182d06ba9642"/>
-            #  <childref hlink="_bbd9b59cb0709454032"/>
-            #  <childref hlink="_bbd9b32db1501cb7968"/>
-            #  <childref hlink="_bbd9fd3f1404b1ac595"/>
-            # </family>
-            #
             familyNodes = root.findall(GrampsNS('.//families/family'))
 
             for familyNode in familyNodes:
@@ -798,20 +825,6 @@ class Parser(object):
                     source_handle = sourceNode.attrib.get('hlink')
                     f.source_handles.append(source_handle)
 
-            # This is an example of the event structure:
-            #
-            # <event handle="_bb2a73da89376f2e069" change="1287656448" id="E1000">
-            #  <type>Death</type>
-            #  <dateval val="1955-06-04"/>
-            #  <place hlink="_bb2a73da908569b4132"/>
-            #  <noteref hlink="_bb2a73da9362223d031"/>
-            #  <sourceref hlink="_bb60df55dd862a3e6b1" conf="4">
-            #    <spage>1955/012559</spage>
-            #    <noteref hlink="_bb60eb134ff61992598"/>
-            #    <dateval val="1955-06-04"/>
-            #  </sourceref>
-            # </event>
-            #
             eventNodes = root.findall(GrampsNS('.//events/event'))
 
             for eventNode in eventNodes:
@@ -847,14 +860,6 @@ class Parser(object):
                     source_handle = sourceNode.attrib.get('hlink')
                     e.source_handles.append(source_handle)
 
-            # This is an example of the place structure:
-            #
-            #   <places>
-            #    <placeobj handle="_bcd2a83849845c12c13" change="1297580946" id="P0806">
-            #      <ptitle>Morwell, Victoria, Australia</ptitle>
-            #      <coord long="146.3947107" lat="-38.2345742"/>
-            #    </placeobj>
-            #
             placeNodes = root.findall(GrampsNS('.//places/placeobj'))
 
             for placeNode in placeNodes:

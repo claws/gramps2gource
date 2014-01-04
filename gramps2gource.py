@@ -28,6 +28,11 @@ The visualisation can be recorded to file using:
 Author: Chris Laws
 '''
 
+from __future__ import print_function
+from __future__ import unicode_literals
+from future.builtins import open
+from future.builtins import int
+
 import datetime
 import logging
 import sys
@@ -201,7 +206,6 @@ class Gramps2Gource(object):
                     # Gource requires timestamp as an int
                     timestamp = int(timestamp)
 
-                    logging.debug("timestamp {0}".format(timestamp))
                     if event.type == 'Birth':
                         if directEvent:
                             gource_event = GOURCE_ADDED
@@ -318,12 +322,12 @@ if __name__ == "__main__":
                         format='%(levelname)s - %(message)s')
 
     if args.database is None:
-        print "Error: No gramps file provided"
+        print("Error: No gramps file provided")
         args.print_usage()
         sys.exit(1)
 
     if args.names is None:
-        print "Error: No focus name(s) provided"
+        print("Error: No focus name(s) provided")
         args.print_usage()
         sys.exit(1)
 

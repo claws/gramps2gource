@@ -1,0 +1,21 @@
+# gramps2gource
+#
+# After modifying this file check it using: http://lint.travis-ci.org/
+#
+
+language: python
+
+python:
+  - "2.6"
+  - "2.7"
+  - "3.2"
+  - "3.3"
+
+# command to install dependencies
+install:
+  - "pip install --use-mirrors -r requirements.txt"
+
+# command to run tests
+script:
+  - python gramps2gource.py --name="Amber Marie Smith" --db=example.gramps
+  - ls pedigree_amber_marie_smith.log
