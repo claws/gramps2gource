@@ -28,6 +28,7 @@ The visualisation can be recorded to file using:
 Author: Chris Laws
 '''
 
+from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 from future.builtins import open
@@ -43,7 +44,13 @@ import gramps
 
 ref_dt = datetime.datetime(1970, 1, 1, 0, 0, 0)
 ref_timestamp = time.mktime(ref_dt.timetuple())
-secondsInOneDay = datetime.timedelta(days=1).total_seconds()
+try:
+    secondsInOneDay = datetime.timedelta(days=1).total_seconds()
+except AttributeError as ex:
+    # python2.6 does not have total_seconds
+    one_day_dt = datetime.timedelta(days=1)
+    secondsInOneDay = (one_day_dt.microseconds + (one_day_dt.seconds + one_day_dt.days * 24 * 3600) * 10**6) / 10**6
+
 
 GOURCE_ADDED = 'A'     # maps to birth
 GOURCE_DELETED = 'D'   # maps to death
