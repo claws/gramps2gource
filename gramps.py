@@ -25,7 +25,7 @@ except ImportError:
 _required_version = (2.6)
 _py_ver = sys.version_info
 print("Python version is: {0}".format(_py_ver))
-if _py_ver == 2:
+if _py_ver[0] == 2:
     if _py_ver[1] < 6:
         print("Error: Python version must be {0}.{1} or greater",
               _required_version[0], _required_version[1])
