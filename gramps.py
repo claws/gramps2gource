@@ -6,18 +6,47 @@ This module implements a simple and naive Gramps XML file (.gramps) parser.
 Author: Chris Laws
 '''
 
+from __future__ import print_function
 from __future__ import unicode_literals
 from future.builtins import str
 
 import datetime
 import dateutil.parser
-import gzip
+from gzip import GzipFile
 import logging
+import sys
 try:
     from xml.etree import cElementTree as etree
 except ImportError:
     from xml.etree import ElementTree as etree
 
+# In python2.6 the GzipFile does not have __exit__ so does
+# not work with the with statement.
+_required_version = (2.6)
+_py_ver = sys.version_info
+if _py_ver == 2:
+    if _py_ver[1] < 6:
+        print("Error: Python version must be {0}.{1} or greater",
+              _required_version[0], _required_version[1])
+        sys.exit(1)
+
+    if _py_ver[1] == 6:
+
+        class GzipFileForPy26(GzipFile):
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, type, value, tb):
+                self.close()
+
+        GzipFileReader = GzipFileForPy26
+    else:
+        # python 2.7+
+        GzipFileReader = GzipFile
+else:
+    # python3+
+    GzipFileReader = GzipFile
 
 indent = "  "
 
@@ -722,7 +751,7 @@ class Parser(object):
 
         store = Store()
 
-        with gzip.GzipFile(filename=gramps_file, mode="rb", compresslevel=9) as fd:
+        with GzipFileReader(filename=gramps_file, mode="rb", compresslevel=9) as fd:
             data = fd.read()
 
             root = etree.fromstring(data)
