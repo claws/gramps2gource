@@ -21,7 +21,7 @@ The Gource custom log format contains the following pipe ('|') delimited fields:
     file      - Path of the file updated.
     colour    - A colour for the file in hex (FFFFFF) format. Optional.
 
-Gramps2Gource should work on Python2 and Python3.
+Gramps2Gource works on Python2.7 and Python3.3.
 
 One day I may investigate integrating this into Gramps as a plugin where it could access the Gramps database directly instead of via an exported `.gramps` file.
 
