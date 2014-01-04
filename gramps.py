@@ -12,7 +12,7 @@ from future.builtins import str
 
 import datetime
 import dateutil.parser
-from gzip import GzipFile
+import gzip
 import logging
 import sys
 try:
@@ -24,6 +24,7 @@ except ImportError:
 # not work with the with statement.
 _required_version = (2.6)
 _py_ver = sys.version_info
+print("Python version is: {0}".format(_py_ver))
 if _py_ver == 2:
     if _py_ver[1] < 6:
         print("Error: Python version must be {0}.{1} or greater",
@@ -32,7 +33,7 @@ if _py_ver == 2:
 
     if _py_ver[1] == 6:
 
-        class GzipFileForPy26(GzipFile):
+        class GzipFileForPy26(gzip.GzipFile):
 
             def __enter__(self):
                 return self
@@ -40,13 +41,16 @@ if _py_ver == 2:
             def __exit__(self, type, value, tb):
                 self.close()
 
+        print("Using GzipFileForPy26 as GzipFileReader for python version: {0}".format(_py_ver))
         GzipFileReader = GzipFileForPy26
     else:
         # python 2.7+
-        GzipFileReader = GzipFile
+        print("Using GzipFile as GzipFileReader for python version: {0}".format(_py_ver))
+        GzipFileReader = gzip.GzipFile
 else:
     # python3+
-    GzipFileReader = GzipFile
+    print("Using GzipFile as GzipFileReader for python version: {0}".format(_py_ver))
+    GzipFileReader = gzip.GzipFile
 
 indent = "  "
 
