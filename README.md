@@ -2,6 +2,8 @@
 
 Blurring the line between Genealogy and Software Configuration Management visualisation.
 
+[![Build Status](https://travis-ci.org/claws/gramps2gource.png?branch=master)](https://travis-ci.org/claws/gramps2gource)
+
 ## Overview
 
 **Gramps2Gource** combines [Gramps](http://gramps-project.org/) (a Genealogy program written in Python) and [Gource](https://code.google.com/p/gource/) (a software version control visualisation tool for showing  changes over time) to help produce a novel family history visualisation. It parses exported `.gramps` files to produce a Gource custom log file containing the pedigree for a specified person. This custom log file can then be passed to Gource for rendering. See the example video below:
