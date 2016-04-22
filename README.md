@@ -49,7 +49,7 @@ Gramps2Gource uses dateutil to help parse complex date descriptions.
 
 #### Install Future module
 
-Gramps2Gource uses the `future` module to achieve Python2 and Python3 compatibility. The `future` must be installed.
+For Python2 and Python3 compatibility Gramps2Gource uses the `future` module, hence this must be installed also.
 
     $ [sudo] pip[3] install future
 
@@ -83,6 +83,37 @@ The `gource.conf` effectively builds a command line similar to:
     $ cat pedigree_amber_marie_smith.log | gource -1280x720 --log-format custom --font-size 20 --hide users,dirnames,date --stop-at-end --camera-mode overview --seconds-per-day 1 --disable-bloom --auto-skip-seconds 1 -i 0 -c 3.0 -
 
 The '-' at the end is important, it instructs Gource to read from standard input.
+
+
+### Calendar Formats
+
+Event dates can often be stored in different calendar formats. To accomodate
+this it is possible to implement your own date parser to convert your specific
+calendar date strings into the necessary datetime object used by Gramps2Gource.
+
+Instead of running `gramps2gource.py` you will need to use something like the
+`custom_date_g2g.py` example. This script accepts the same command line
+arguments as the `gramps2gource.py` script.
+
+Prior to running the script you will need to make some code changes to
+implement and register your specific date handler functions.
+
+For example, if you have event dates in `French Republican` format (e.g. the
+`cformat` field stored within the gramps date item is `French Republican`) you
+would create and register a handler with the name `French Republican`. For
+example:
+
+``` python
+
+def frech_republican_date_handler(datestring):
+    return magic_datetime_creater(datestring)
+
+gramps.date_processor.register(
+    'French Republican', french_republican_date_handler)
+```
+
+You need to register the date parser prior to instantiating the
+`Gramps2Gource` object.
 
 
 ### Multiple Focus People

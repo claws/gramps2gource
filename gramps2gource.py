@@ -42,6 +42,9 @@ import time
 import gramps
 
 
+logger = logging.getLogger(__name__)
+
+
 ref_dt = datetime.datetime(1970, 1, 1, 0, 0, 0)
 ref_timestamp = time.mktime(ref_dt.timetuple())
 try:
@@ -72,7 +75,7 @@ class Gramps2Gource(object):
         ancestors. Each tuple contains a person handle and a pseudo-path
         to be used by Gource.
         """
-        logging.debug("Collecting ancestors for {0}".format(person.name))
+        logger.debug("Collecting ancestors for {0}".format(person.name))
 
         if ancestors is None:
             ancestors = []
@@ -111,20 +114,20 @@ class Gramps2Gource(object):
         """
 
         if not names:
-            logging.error("No focus persons supplied")
+            logger.error("No focus persons supplied")
             sys.exit(1)
 
         all_records = []
 
         for name in names:
             person_handles = []
-            logging.info("Generating pedigree output for: {0}".format(name))
+            logger.info("Generating pedigree output for: {0}".format(name))
             person_handle = self.db.find_person(name)
             if person_handle:
                 person = self.db.get_person(person_handle)
                 ancestor_handles = self.get_ancestors(person)
 
-                logging.debug("{0} has {1} ancestors in the database".format(
+                logger.debug("{0} has {1} ancestors in the database".format(
                     name, len(ancestor_handles)))
                 person_handles = ancestor_handles
 
@@ -144,7 +147,8 @@ class Gramps2Gource(object):
                         for associated_event in associated_events:
                             obj, event, directEvent = associated_event
                             if event.date:
-                                associated_events_with_dates.append(associated_event)
+                                associated_events_with_dates.append(
+                                    associated_event)
 
                         if associated_events_with_dates:
                             people_to_plot.append(
@@ -152,27 +156,36 @@ class Gramps2Gource(object):
                                  associated_events_with_dates))
 
                     if people_to_plot:
-                        logging.info("Starting generation of custom gource log data")
+                        logger.info(
+                            "Starting generation of custom gource log data")
 
-                        records = self._to_pedigree_gource_log_format(people_to_plot)
+                        records = self._to_pedigree_gource_log_format(
+                            people_to_plot)
                         all_records.extend(records)
 
-                        logging.info("Finished generation of custom gource log data")
+                        logger.info(
+                            "Finished generation of custom gource log data")
 
         if all_records:
             # Sort events by time such that Gource displays the pedigree in reverse order
-            logging.info("Adjusting timestamps so gource displays them in reverse order")
+            logger.info(
+                "Adjusting timestamps so gource displays them in reverse order")
             records = [(ts * -1, name, event, path) for ts, name, event, path in all_records]
             records.sort()
 
-            logging.info("Writing custom gource log data to {0}".format(output_file))
+            logger.info("Writing custom gource log data to {0}".format(output_file))
 
             with open(output_file, 'w') as fd:
                 for ts, name, event, path in records:
                     fd.write("{0}|{1}|{2}|{3}\n".format(ts, name, event, path))
                 fd.write("\n") # add an empty line at the end to trigger EOF
 
-            logging.info("Completed. Custom gource log file: {0}".format(output_file))
+            logger.info(
+                "Completed. Custom gource log file: {0}".format(
+                    output_file))
+        else:
+            logger.error(
+                "No gource log file created - no records to write")
 
     def _to_gource_log_format(self, person_events):
         """
@@ -184,7 +197,7 @@ class Gramps2Gource(object):
 
         for person, person_gource_path, related_events in person_events:
 
-            logging.debug("Creating log entries for {0}".format(person.name))
+            logger.debug("Creating log entries for {0}".format(person.name))
 
             # Reduce events to only those that contain dates
             related_events_with_dates = []
@@ -193,7 +206,7 @@ class Gramps2Gource(object):
                 if event.date:
                     related_events_with_dates.append(related_event)
                 else:
-                    logging.debug("No date for event {0}".format(event.type))
+                    logger.debug("No date for event {0}".format(event.type))
 
             if related_events_with_dates:
 
@@ -244,7 +257,7 @@ class Gramps2Gource(object):
                         gource_event = GOURCE_MODIFIED
                     else:
                         gource_event = GOURCE_UNKNOWN
-                        logging.debug("Don't know how to handle event type {0}".format(event.type))
+                        logger.debug("Don't know how to handle event type {0}".format(event.type))
 
                     if gource_event != GOURCE_UNKNOWN:
                         record = (timestamp, person.surname.lower(),
@@ -264,7 +277,7 @@ class Gramps2Gource(object):
 
         for person, gource_path, related_events in person_events:
 
-            logging.debug("Creating log entries for {0}".format(person.name))
+            logger.debug("Creating log entries for {0}".format(person.name))
 
             # Reduce events to only those that contain dates
             related_events_with_dates = []
@@ -273,7 +286,7 @@ class Gramps2Gource(object):
                 if event.date:
                     related_events_with_dates.append(related_event)
                 else:
-                    logging.debug("No date for event {0}".format(event.type))
+                    logger.debug("No date for event {0}".format(event.type))
 
             if related_events_with_dates:
 
@@ -322,11 +335,10 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", dest="output", default=None,
                         type=str,
                         help="The name of the file to send the output to")
-
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO,
-                        format='%(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO, format='%(levelname)s - %(message)s')
 
     if args.database is None:
         print("Error: No gramps file provided")
@@ -348,4 +360,4 @@ if __name__ == "__main__":
     g2g = Gramps2Gource(args.database)
     g2g.pedigree(args.names, args.output)
 
-    logging.info("Done.")
+    logger.info("Done.")
