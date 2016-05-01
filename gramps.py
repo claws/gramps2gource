@@ -19,7 +19,77 @@ except ImportError:
     from xml.etree import ElementTree as etree
 
 
+logger = logging.getLogger(__name__)
+
+
 indent = "  "
+
+
+def default_date_parser(datestring):
+    ''' Convert a date string into a datetime object '''
+
+    # some dates are missing the day so use a default such that
+    # a valid datetime object can be created.
+    if len(datestring.split("-")) == 2:
+        logger.debug(
+            "{0} missing item from date string, using day 01 for"
+            " compatibility".format(datestring))
+        datestring = "{0}-01".format(datestring)
+
+    # Dates are used in many different formats, use the
+    # dateutil parser in an effort to successfully
+    # parse a useful date.
+    return dateutil.parser.parse(datestring)
+
+
+class DateParser(object):
+
+    def __init__(self):
+
+        self.handlers = {}
+
+        # register a default handler to use as a fallback.
+        self.register('default', default_date_parser)
+
+    def register(self, cal_format, handler):
+        '''
+        Register a handler function for a specific date_type. For example,
+        if your dates are in `French Republican` format use can use this
+        method to register a handler function that will convert one of
+        these dates into a valid datetime.
+
+        :param cal_format: a string identifying the calendar format type.
+          For example, `French Republican`.
+
+        :param handler: a callable that can convert a date string into a
+          valid datetime object.
+        '''
+        logger.debug(
+            'Registering a date handler for format: %s', cal_format)
+        if cal_format in self.handlers:
+            raise Exception(
+                'Duplicate date handlers detected for: %s', cal_format)
+        self.handlers[cal_format] = handler
+
+    def parse(self, datestring, cal_format=None):
+        ''' Parse a date string and return a datetime object.
+
+        :param format: the format of the date string. For example, Islamic,
+          French Republican, etc.
+        '''
+        cformat = cal_format or 'default'
+
+        if cformat not in self.handlers:
+            logger.warning(
+                'No date parser registered for %s, falling back to default',
+                cformat)
+            cformat = 'default'
+
+        handler = self.handlers.get(cformat)
+        return handler(datestring)
+
+
+date_processor = DateParser()
 
 
 def generate_timestring(dt):
@@ -109,6 +179,7 @@ class Event(object):
         self.description = None
         self.date = None
         self.date_type = None
+        self.date_cformat = None
 
         # handles
         self.place_handle = None
@@ -122,18 +193,13 @@ class Event(object):
         '''
         if self.date:
             try:
-                parts = self.date.split("-")
-                if len(parts) == 2:
-                    logging.debug("{0} missing item from date string, using day 01 for compatibility".format(self.date))
-                    self.date = "{0}-01".format(self.date)
-                # Dates are used in many different formats, use the
-                # dateutil parser in an effort to successfully
-                # parse a useful date.
-                dt = dateutil.parser.parse(self.date)
-                return dt
-            except ValueError as ex:
-                logging.error("Problem date \'{0}\':".format(self.date, ex))
-                raise Exception(ex)
+                return date_processor.parse(
+                    self.date, cal_format=self.date_cformat)
+            except Exception:
+                logger.exception(
+                    "Problem parsing date: {0}, cal_format={1}".format(
+                        self.date, self.cformat))
+                raise
         else:
             return None
 
@@ -332,48 +398,69 @@ class Person(object):
                 if includeEventsWithNoDate:
                     undated_events.append((self, event, directPersonEvent))
                 else:
-                    logging.debug("Discarding direct person event {0} for {1} as it has no date".format(event.type, self.name))
+                    logger.debug(
+                        "Discarding direct person event {0} for {1} as it "
+                        "has no date".format(event.type, self.name))
                     pass
 
         # now retrieve associated events that this person was involved with
         directPersonEvent = False
 
         if self.parent_in_handles:
-            logging.debug("{0} is a parent in {1} families".format(self.name, len(self.parent_in_handles)))
+            logger.debug(
+                "{0} is a parent in {1} families".format(
+                    self.name, len(self.parent_in_handles)))
             for parent_handle in self.parent_in_handles:
                 family = self.store.get_family(parent_handle)
                 # Add any family events such as marriage, divorce
-                logging.debug("Family {0} has {1} family events".format(family.name, len(family.events)))
+                logger.debug(
+                    "Family {0} has {1} family events".format(
+                        family.name, len(family.events)))
                 for event in family.events:
                     if event.datetime:
-                        dated_events.append((family, event, directPersonEvent))
+                        dated_events.append(
+                            (family, event, directPersonEvent))
                     else:
                         if includeEventsWithNoDate:
-                            undated_events.append((family, event, directPersonEvent))
+                            undated_events.append(
+                                (family, event, directPersonEvent))
                         else:
-                            logging.debug("Discarding associated family event {0} for {1} as it has no date".format(event.type, family.name))
+                            logger.debug(
+                                "Discarding associated family event {0} for "
+                                "{1} as it has no date".format(
+                                    event.type, family.name))
                             pass
 
-                logging.debug("Family {0} has {1} children".format(family.name, len(family.children)))
+                logger.debug(
+                    "Family {0} has {1} children".format(
+                        family.name, len(family.children)))
                 # add birth of children
                 if family.children:
                     for child in family.children:
                         for event in child.events:
                             if event.type == 'Birth':
                                 if event.datetime:
-                                    dated_events.append((child, event, directPersonEvent))
+                                    dated_events.append(
+                                        (child, event, directPersonEvent))
                                 else:
                                     if includeEventsWithNoDate:
-                                        undated_events.append((child, event, directPersonEvent))
+                                        undated_events.append(
+                                            (child, event, directPersonEvent))
                                     else:
-                                        logging.debug("Discarding associated family event {0} for {1} as it has no date" % (event.type, child.name))
+                                        logger.debug(
+                                            "Discarding associated family "
+                                            "event {0} for {1} as it has no "
+                                            "date".format(
+                                                event.type, child.name))
                                         pass
 
         if self.child_of_handle:
             # potentially associate younger sibling location events too
             # as this person was likely around those locations too.
             family = self.store.get_family(self.child_of_handle)
-            logging.debug("Family {0} had {1} children".format(family.name, len(family.children)))
+            logger.debug(
+                "Family {0} had {1} children".format(
+                    family.name, len(family.children)))
             for sibling in family.children:
                 if sibling.handle != self.handle:
                     for event in sibling.events:
@@ -383,15 +470,21 @@ class Person(object):
                                     # don't associate sibling birth events if they
                                     # occur after the person has immigrated/emmigrated.
                                     if SiblingCutoffDatetime is None:
-                                        dated_events.append((sibling, event, directPersonEvent))
+                                        dated_events.append(
+                                            (sibling, event, directPersonEvent))
                                     else:
                                         if event.datetime < SiblingCutoffDatetime:
-                                            dated_events.append((sibling, event, directPersonEvent))
+                                            dated_events.append(
+                                                (sibling, event, directPersonEvent))
                             else:
                                 if includeEventsWithNoDate:
-                                    undated_events.append((sibling, event, directPersonEvent))
+                                    undated_events.append(
+                                        (sibling, event, directPersonEvent))
                                 else:
-                                    logging.debug("Discarding associated family event {0} for {1} as it has no date" % (event.type, sibling.name))
+                                    logger.debug(
+                                        "Discarding associated family event "
+                                        "{0} for {1} as it has no date" % (
+                                            event.type, sibling.name))
                                     pass
 
         # sort events in time order. This can only be done after
@@ -415,7 +508,7 @@ class Person(object):
         Return an unordered list of this person's handle and those of their
         ancestors.
         """
-        logging.debug("Collecting ancestors for {0}".format(self.name))
+        logger.debug("Collecting ancestors for {0}".format(self.name))
         if ancestors is None:
             ancestors = []
         ancestors.append(self.handle)
@@ -658,13 +751,13 @@ class Store(object):
         matching name.
         Return None if no match is found.
         '''
-        logging.debug("Searching for {0}".format(search_name))
+        logger.debug("Searching for {0}".format(search_name))
         search_person_handle = None
         for person_handle in self.persons:
             person = self.get_person(person_handle)
             if person.name == search_name:
                 search_person_handle = person.handle
-                logging.debug("Found {0} with handle {1}".format(search_name,
+                logger.debug("Found {0} with handle {1}".format(search_name,
                                                                  person.handle))
                 break
         return search_person_handle
@@ -718,7 +811,7 @@ class Parser(object):
         @return: a store object populated with content extracted from the database.
         """
 
-        logging.info("Loading Gramps database from {0}".format(gramps_file))
+        logger.info("Loading Gramps database from {0}".format(gramps_file))
 
         store = Store()
 
@@ -843,6 +936,7 @@ class Parser(object):
                 if datevalNode is not None:
                     e.date = datevalNode.attrib.get('val')
                     e.date_type = datevalNode.attrib.get('type')
+                    e.cformat = datevalNode.attrib.get('cformat')
 
                 descriptionNode = eventNode.find(GrampsNS('description'))
                 if descriptionNode is not None:
