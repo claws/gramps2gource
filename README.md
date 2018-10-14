@@ -75,7 +75,7 @@ To generate the custom gource log and display it you need to tell the `gramps2go
 
 Example:
 
-    $ python gramps2gource.py --name="Amber Marie Smith" --db=example.gramps
+    $ python gramps2gource.py --name="Amber Marie Smith" --db=example.gramps --output=pedigree_amber_marie_smith.log
     $ cat pedigree_amber_marie_smith.log | gource --load-config gource.conf -
 
 The `gource.conf` effectively builds a command line similar to:
@@ -122,7 +122,7 @@ Multiple `name` arguments can be specified if you want to show more than one foc
 
 Example:
 
-    $ python gramps2gource.py --name="Amber Marie Smith" --name="John Hjalmar Smith" --db=example.gramps
+    $ python gramps2gource.py --name="Amber Marie Smith" --name="John Hjalmar Smith" --db=example.gramps --output=pedigree.log
     $ cat pedigree.log | gource --load-config gource.conf --hide-root -
 
 
